@@ -34,7 +34,7 @@ def fetch(channel):
             'token': token,
             'channel': channel,
             'count': 1000,
-            'oldest': datetime.now().timestamp() - 10 * 86400 - 3600,
+            'oldest': datetime.now().timestamp() - 86400 - 3600,
         },
     ).json()
 
