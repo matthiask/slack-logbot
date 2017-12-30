@@ -1,6 +1,7 @@
 from datetime import datetime
-from speckenv import read_speckenv, env
+import re
 import requests
+from speckenv import read_speckenv, env
 
 
 read_speckenv()
@@ -22,11 +23,7 @@ def users():
     ).json()
 
     return {
-        member['id']: '%s (%s)' % (
-            member.get('real_name', '?'),
-            member['name'],
-        )
-        for member in response['members']
+        member['id']: member['name'] for member in response['members']
     }
 
 
@@ -37,11 +34,19 @@ def fetch(channel):
             'token': token,
             'channel': channel,
             'count': 1000,
-            'oldest': datetime.now().timestamp() - 86400 - 3600,
+            'oldest': datetime.now().timestamp() - 10 * 86400 - 3600,
         },
     ).json()
 
     return response
+
+
+def fill_usernames(user_dict, text):
+    def id_to_user(match):
+        id = match.groups()[0]
+        return '@' + user_dict.get(id, id)
+
+    return re.sub(r'<@(\w+)>', id_to_user, text)
 
 
 def log(user_dict, channel):
@@ -52,7 +57,7 @@ def log(user_dict, channel):
             log.append('%s at %s:\n%s' % (
                 user_dict.get(item['user'], item['user']),
                 datetime.fromtimestamp(float(item['ts'])).isoformat(),
-                item['text'],
+                fill_usernames(user_dict, item['text']),
             ))
         else:
             log.append(repr(item))
