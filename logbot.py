@@ -49,6 +49,21 @@ def fill_usernames(user_dict, text):
     return re.sub(r'<@(\w+)>', id_to_user, text)
 
 
+def format_attachments(item):
+    lines = []
+    if item.get('text'):
+        lines.append(item['text'])
+    for attachment in item['attachments']:
+        lines.extend(
+            line for line in (
+                attachment.get('title'),
+                attachment.get('title_link'),
+                attachment.get('text'),
+            ) if line
+        )
+    return '\n'.join(lines)
+
+
 def log(user_dict, channel):
     data = fetch(channel)
     log = ['']
@@ -56,8 +71,18 @@ def log(user_dict, channel):
         if item['type'] == 'message' and 'user' in item:
             log.append('%s at %s:\n%s' % (
                 user_dict.get(item['user'], item['user']),
-                datetime.fromtimestamp(float(item['ts'])).isoformat(),
+                datetime.fromtimestamp(float(item['ts'])).strftime(
+                    '%Y-%m-%d %H:%M:%S',
+                ),
                 fill_usernames(user_dict, item['text']),
+            ))
+        elif item.get('subtype') == 'bot_message' and 'attachments' in item:
+            log.append('%s at %s:\n%s' % (
+                item.get('username', '(Bot)'),
+                datetime.fromtimestamp(float(item['ts'])).strftime(
+                    '%Y-%m-%d %H:%M:%S',
+                ),
+                format_attachments(item),
             ))
         else:
             log.append(repr(item))
@@ -66,7 +91,7 @@ def log(user_dict, channel):
 
 
 def header(text):
-    return (text.upper() + ' ' + '#' * 70)[:70]
+    return (text.upper() + ' ' + '#' * 50)[:50]
 
 
 if __name__ == '__main__':
@@ -74,6 +99,7 @@ if __name__ == '__main__':
     # pprint(fetch())
     # pprint(users())
     user_dict = users()
+    # pprint(user_dict)
     for name, channel in groups:
         print(header(name))
         print(log(user_dict, channel))
