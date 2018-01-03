@@ -53,7 +53,7 @@ def format_attachments(item):
     lines = []
     if item.get('text'):
         lines.append(item['text'])
-    for attachment in item['attachments']:
+    for attachment in item.get('attachments', []):
         lines.extend(
             line for line in (
                 attachment.get('title'),
@@ -76,7 +76,7 @@ def log(user_dict, channel):
                 ),
                 fill_usernames(user_dict, item['text']),
             ))
-        elif item.get('subtype') == 'bot_message' and 'attachments' in item:
+        elif item.get('subtype') == 'bot_message':
             log.append('%s at %s:\n%s' % (
                 item.get('username', '(Bot)'),
                 datetime.fromtimestamp(float(item['ts'])).strftime(
